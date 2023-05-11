@@ -14,19 +14,11 @@ import Image from 'next/image'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import Button, { ButtonProps } from '@mui/material/Button'
-import { Plus, Pencil, TrashCan, Toaster } from 'mdi-material-ui'
+import { Plus, Pencil, TrashCan } from 'mdi-material-ui'
 import IconButton from '@mui/material/IconButton'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  FormHelperText,
-  TextField
-} from '@mui/material'
+import { Dialog, DialogActions, DialogTitle, FormHelperText, TextField } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-hot-toast'
@@ -109,10 +101,10 @@ export default function Categories() {
 
       if (isUpdate) {
         await dispatch(updateCategory({ _id: selectedCategory, body: formData })).unwrap()
-        toast.success('Update category successfully.')
+        toast.success('Cập nhập thành công.')
       } else {
         await dispatch(createCategory(formData)).unwrap()
-        toast.success('Create category successfully.')
+        toast.success('Thêm mới thành công.')
       }
 
       reset()
@@ -121,9 +113,7 @@ export default function Categories() {
       setImageFile(undefined)
     } catch (error) {
       setIsSubmitting(false)
-      toast.error(
-        (error as IResponseError).error || (isUpdate ? 'Can not update category' : 'Can not create category.')
-      )
+      toast.error((error as IResponseError).error || (isUpdate ? 'Không thể cập nhập' : 'Không thể thêm mới.'))
     }
   }
 
