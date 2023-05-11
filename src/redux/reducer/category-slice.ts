@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { RootState } from '../../store/root'
-import { createCategory, getCategories } from '../action/category-actions'
+import { createCategory, deleteCategory, getCategories, updateCategory } from '../action/category-actions'
 
 interface CategoryState {
   categories: ICategory[]
@@ -24,6 +24,17 @@ export const counterSlice = createSlice({
       if (index === -1) {
         state.categories.push(action.payload)
       }
+    })
+    builder.addCase(updateCategory.fulfilled, (state, action: PayloadAction<ICategory>) => {
+      const category = state.categories.find(item => item._id === action.payload._id)
+
+      if (category) {
+        category.image = action.payload.image
+        category.name = action.payload.name
+      }
+    })
+    builder.addCase(deleteCategory.fulfilled, (state, action: PayloadAction<string>) => {
+      state.categories = state.categories.filter(item => item._id !== action.payload)
     })
   }
 })

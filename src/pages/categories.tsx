@@ -1,4 +1,4 @@
-import React, { useEffect, ElementType, useState, ChangeEvent } from 'react'
+import React, { useEffect, ElementType, useState, ChangeEvent, useRef } from 'react'
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
@@ -9,7 +9,7 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import { useAppDispatch, useAppSelector } from '../store/hook'
 import { selectCategories } from '../redux/reducer/category-slice'
-import { createCategory, getCategories } from '../redux/action/category-actions'
+import { createCategory, deleteCategory, getCategories, updateCategory } from '../redux/action/category-actions'
 import Image from 'next/image'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
@@ -18,7 +18,15 @@ import { Plus, Pencil, TrashCan, Toaster } from 'mdi-material-ui'
 import IconButton from '@mui/material/IconButton'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
-import { FormHelperText, TextField } from '@mui/material'
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormHelperText,
+  TextField
+} from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-hot-toast'
@@ -45,11 +53,14 @@ interface FormValue {
 export default function Categories() {
   const dispatch = useAppDispatch()
   const categories = useAppSelector(selectCategories)
+  const formRef = useRef<HTMLDivElement>(null)
 
+  const [open, setOpen] = React.useState(false)
   const [imgSrc, setImgSrc] = useState<string>('/images/default.png')
   const [imageFile, setImageFile] = useState<File>()
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const [isUpdate, setIsUpdate] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState('')
   const {
     control,
     handleSubmit,
@@ -87,25 +98,74 @@ export default function Categories() {
     try {
       setIsSubmitting(true)
       const formData = new FormData()
-      formData.append('name', value.name)
-      formData.append('file', imageFile as File)
 
-      await dispatch(createCategory(formData)).unwrap()
+      if (value.name) {
+        formData.append('name', value.name)
+      }
+
+      if (imageFile) {
+        formData.append('file', imageFile as File)
+      }
+
+      if (isUpdate) {
+        await dispatch(updateCategory({ _id: selectedCategory, body: formData })).unwrap()
+        toast.success('Update category successfully.')
+      } else {
+        await dispatch(createCategory(formData)).unwrap()
+        toast.success('Create category successfully.')
+      }
 
       reset()
       setImgSrc('/images/default.png')
-      toast.success('Create category successfully.')
       setIsSubmitting(false)
+      setImageFile(undefined)
     } catch (error) {
       setIsSubmitting(false)
-      toast.error((error as IResponseError).error || 'Can not create category.')
+      toast.error(
+        (error as IResponseError).error || (isUpdate ? 'Can not update category' : 'Can not create category.')
+      )
     }
   }
 
   const onEditButonClick = (category: ICategory) => () => {
     setImgSrc(category.image)
+    setImageFile(undefined)
+    setIsUpdate(true)
     setValue('name', category.name)
-    setValue('image', category.image)
+    setValue('image', '')
+    setSelectedCategory(category._id)
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const onAddButtonClick = () => {
+    reset()
+    setIsUpdate(false)
+    setImgSrc('/images/default.png')
+    setImageFile(undefined)
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const handleClickOpen = (id: string) => () => {
+    setOpen(true)
+    setSelectedCategory(id)
+  }
+
+  const handleClose = () => {
+    setOpen(false)
+  }
+
+  const handleDelete = async () => {
+    try {
+      await dispatch(deleteCategory(selectedCategory)).unwrap()
+      setOpen(false)
+      toast.success('Xóa thành công')
+    } catch (error) {
+      toast.error('Xóa thất bại')
+    }
   }
 
   useEffect(() => {
@@ -117,11 +177,11 @@ export default function Categories() {
       <Grid item xs={12}>
         <Card>
           <CardHeader
-            title='Categories'
+            title='Danh sách phân loại'
             titleTypographyProps={{ variant: 'h6' }}
             action={
-              <Button variant='contained'>
-                <Plus sx={{ marginRight: 2 }} /> Add
+              <Button onClick={onAddButtonClick} variant='contained'>
+                <Plus sx={{ marginRight: 2 }} /> Thêm
               </Button>
             }
           />
@@ -129,9 +189,9 @@ export default function Categories() {
             <Table sx={{ minWidth: 650 }} aria-label='simple table'>
               <TableHead>
                 <TableRow>
-                  <TableCell>Image</TableCell>
-                  <TableCell align='right'>Name</TableCell>
-                  <TableCell align='right'>Actions</TableCell>
+                  <TableCell>Hình ảnh</TableCell>
+                  <TableCell align='right'>Tên</TableCell>
+                  <TableCell align='right'>Hành động</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -146,7 +206,7 @@ export default function Categories() {
                       }}
                     >
                       <TableCell component='th' scope='row'>
-                        <Image src={row.image} width={150} height={150} />
+                        <Image src={row.image} width={150} objectPosition={'center'} objectFit='contain' height={150} />
                       </TableCell>
                       <TableCell align='right'>{row.name}</TableCell>
                       <TableCell align='right'>
@@ -154,7 +214,7 @@ export default function Categories() {
                           <IconButton onClick={onEditButonClick(row)} color='primary' sx={{ marginRight: 2 }}>
                             <Pencil />
                           </IconButton>
-                          <IconButton color='error'>
+                          <IconButton onClick={handleClickOpen(row._id)} color='error'>
                             <TrashCan />
                           </IconButton>
                         </Box>
@@ -167,8 +227,11 @@ export default function Categories() {
         </Card>
       </Grid>
       <Grid item xs={12}>
-        <Card>
-          <CardHeader title='Add Category' titleTypographyProps={{ variant: 'h6' }} />
+        <Card ref={formRef}>
+          <CardHeader
+            title={isUpdate ? 'Cập nhập phân loại' : 'Thêm phân loại mới'}
+            titleTypographyProps={{ variant: 'h6' }}
+          />
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Grid container spacing={5}>
@@ -176,13 +239,13 @@ export default function Categories() {
                   <Controller
                     name='name'
                     control={control}
-                    rules={{ required: { value: true, message: 'Please fill out name of category' } }}
+                    rules={{ required: { value: true, message: 'Vui lòng nhập tên cho phân loại' } }}
                     render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
                       <TextField
                         error={invalid}
                         helperText={error?.message}
                         fullWidth
-                        label='Name'
+                        label='Tên phân loại'
                         value={value}
                         onChange={onChange}
                         placeholder='Leonard Carter'
@@ -195,11 +258,11 @@ export default function Categories() {
                     <ImgStyled src={imgSrc} alt='Profile Pic' />
                     <Box>
                       <ButtonStyled component='label' variant='contained' htmlFor='account-settings-upload-image'>
-                        Upload New Photo
+                        Tải lên 1 ảnh mới
                         <Controller
                           name='image'
                           control={control}
-                          rules={{ required: { value: true, message: 'Please chose an image.' } }}
+                          rules={{ required: { value: !isUpdate, message: 'Vui lòng chọn ảnh.' } }}
                           render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
                             <>
                               <input
@@ -223,13 +286,33 @@ export default function Categories() {
                 </Grid>
                 <Grid item xs={12}>
                   <Button disabled={isSubmitting} type='submit' variant='contained' size='large'>
-                    Submit
+                    Xong
                   </Button>
                 </Grid>
               </Grid>
             </form>
           </CardContent>
         </Card>
+      </Grid>
+      <Grid item xs={12}>
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          aria-labelledby='alert-dialog-title'
+          aria-describedby='alert-dialog-description'
+        >
+          <DialogTitle sx={{ fontWeight: 500 }} id='alert-dialog-title'>
+            Bạn có muốn xóa <b>{categories.find(item => item._id === selectedCategory)?.name}</b>?
+          </DialogTitle>
+          <DialogActions>
+            <Button variant='contained' onClick={handleClose}>
+              Không
+            </Button>
+            <Button variant='contained' color='error' onClick={handleDelete} autoFocus>
+              Có
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Grid>
     </Grid>
   )

@@ -16,6 +16,18 @@ const categoryApi = {
     const response = await axiosService.post<IResponseSuccess<ICategory>>(URL, body)
 
     return response.data.data
+  },
+
+  update: async (data: IUpdateCategory) => {
+    const response = await axiosService.put<IResponseSuccess<ICategory>>(`${URL}/${data._id}`, data.body)
+
+    return response.data.data
+  },
+
+  delete: async (id: string) => {
+    const response = await axiosService.delete<IResponseSuccess<string>>(`${URL}/${id}`)
+
+    return response.data.data
   }
 }
 
