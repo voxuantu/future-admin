@@ -1,3 +1,11 @@
+// ** React Imports
+import React, { ChangeEvent, ElementType, useState } from 'react'
+import productAPI from '../../../api/product-api'
+import categoryApi from '../../../api/category-api'
+import { useAppDispatch } from '../../../store/hook'
+import { Controller, useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
+
 // ** MUI Imports
 import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
@@ -12,22 +20,18 @@ import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import { styled } from '@mui/material/styles'
 
-// ** Anothers Imports
-import React, { ChangeEvent, ElementType, useEffect, useRef, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { useAppDispatch, useAppSelector } from '../../store/hook'
-import { selectCategories } from '../../redux/reducer/category-slice'
-import { toast } from 'react-hot-toast'
-import { getCategories } from '../../redux/action/category-actions'
-import productAPI from '../../api/product-api'
+interface Props {
+    categories: IOption[]
+    product: IUpdateProduct
+}
 
 interface FormValue {
-    name: string,
-    thumbnail: any,
-    images: any,
-    price: number,
-    quantity: number,
-    category: IOption,
+    name: string
+    thumbnail: any
+    images: any
+    price: number
+    quantity: number
+    category: IOption
     description: string
 }
 
@@ -45,15 +49,26 @@ const ImgStyled = styled('img')(({ theme }) => ({
     objectFit: 'cover'
 }))
 
-export default function CreateProductForm() {
-    // ** state
-    const categories = useAppSelector(selectCategories)
-    const [thumbnailFile, setThumbnailFile] = useState<File>()
-    const [thumbnail, setThumbnail] = useState<string>('/images/default-img.png')
-    const [imgFiles, setImgFiles] = useState<File[]>([])
-    const [imgSrc, setImgSrc] = useState<string[]>(['/images/default-img.png'])
+export const getServerSideProps = async (context: any) => {
+    const productId = context.query.productId as string
+    const product = await productAPI.getProductUpdate(productId)
+    const cateRes = await categoryApi.getCategories()
+    const categories: IOption[] = cateRes.map(cate => ({ label: cate.name, value: cate._id }))
 
-    const dispatch = useAppDispatch()
+    return {
+        props: {
+            categories,
+            product
+        }
+    }
+}
+
+export default function UpdateProduct({ categories, product }: Props) {
+    // ** state
+    const [thumbnailFile, setThumbnailFile] = useState<File>()
+    const [thumbnail, setThumbnail] = useState<string>(product.thumbnail)
+    const [imgFiles, setImgFiles] = useState<File[]>([])
+    const [imgSrc, setImgSrc] = useState<string[]>(product.images)
 
     // ** react-hook-form
     const {
@@ -65,8 +80,11 @@ export default function CreateProductForm() {
         defaultValues: {
             thumbnail: '',
             images: '',
-            name: '',
-            description: ''
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            quantity: product.quantity,
+            category: categories.find(cate => cate.value === product.category)
         }
     })
 
@@ -96,63 +114,59 @@ export default function CreateProductForm() {
         }
     }
 
-    const hanleFetchCategories = async () => {
-        try {
-            await dispatch(getCategories());
-            // setCateOptions(categories.map((cate) => ({ label: cate.name, value: cate._id })))
-        } catch (error) {
-            toast.error((error as IResponseError).error)
-        }
-    }
-
-    const handleResetForm = () => {
-        reset();
-        setImgFiles([])
-        setImgSrc(['/images/default-img.png'])
-        setThumbnail('/images/default-img.png')
-        setThumbnailFile(undefined)
-    }
-
     const onSubmit = async (data: FormValue) => {
         try {
             const formData = new FormData()
-            formData.append('images', thumbnailFile as File)
-
-            formData.append('price', data.price.toString())
-
-            formData.append('quantity', data.quantity.toString())
-
-            formData.append('category', data.category.value)
-
-            formData.append('name', data.name);
-
-            formData.append('description', data.description);
-
-            for (const file of imgFiles) {
-                formData.append('images', file)
+            if (thumbnailFile) {
+                formData.append('images', thumbnailFile as File)
+            }
+            if (data.price) {
+                formData.append('price', data.price.toString())
             }
 
-            toast.loading('Đang tạo sản phẩm...', { id: 'creatProduct' })
-            await productAPI.createProduct(formData);
-            toast.dismiss('creatProduct')
-            toast.success('Tạo sản phẩm thành công')
-            handleResetForm()
+            if (data.quantity) {
+                formData.append('quantity', data.quantity.toString())
+            }
+
+            if (data.category) {
+                formData.append('category', data.category.value)
+            }
+
+            if (data.name) {
+                formData.append('name', data.name)
+            }
+            if (data.description) {
+                formData.append('description', data.description)
+            }
+
+            if (imgFiles.length > 0) {
+                for (const file of imgFiles) {
+                    formData.append('images', file)
+                }
+            }
+
+            if (thumbnailFile && imgFiles.length > 0) {
+                formData.append('updateImageField', 'all')
+            } else if (thumbnailFile && imgFiles.length === 0) {
+                formData.append('updateImageField', 'thumbnail')
+            } else if (!thumbnailFile && imgFiles.length > 0) {
+                formData.append('updateImageField', 'images')
+            }
+
+            toast.loading('Đang cập nhật sản phẩm...', { id: 'updateProduct' })
+            await productAPI.updateProduct(formData, product._id);
+            toast.dismiss('updateProduct')
+            toast.success('Cập nhật sản phẩm thành công')
         } catch (error) {
-            console.log("error: ", error);
-            toast.dismiss('creatProduct')
+            console.log('error: ', error)
+            toast.dismiss('updateProduct')
             toast.error((error as IResponseError).error)
         }
     }
 
-    useEffect(() => {
-        if (categories.length === 0) {
-            hanleFetchCategories()
-        }
-    }, [])
-
     return (
         <Card>
-            <CardHeader title='Tạo sản phẩm' titleTypographyProps={{ variant: 'h6' }} />
+            <CardHeader title='Cập nhật sản phẩm' titleTypographyProps={{ variant: 'h6' }} />
             <Divider sx={{ margin: 0 }} />
             <form onSubmit={handleSubmit(onSubmit)}>
                 <CardContent>
@@ -169,7 +183,6 @@ export default function CreateProductForm() {
                                         <Controller
                                             name='thumbnail'
                                             control={control}
-                                            rules={{ required: { value: true, message: 'Vui lòng chọn ảnh đại diện cho sản phẩm' } }}
                                             render={({ field: { onChange, value } }) => (
                                                 <input
                                                     hidden
@@ -193,14 +206,15 @@ export default function CreateProductForm() {
                                 Các ảnh khác
                             </FormLabel>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', marginTop: '20px' }}>
-                                {imgSrc.map((img) => <ImgStyled key={img} src={img} alt='product picture' />)}
+                                {imgSrc.map(img => (
+                                    <ImgStyled key={img} src={img} alt='product picture' />
+                                ))}
                                 <Box>
                                     <ButtonStyled component='label' variant='contained' htmlFor='another-upload-image'>
                                         Tải ảnh lên
                                         <Controller
                                             name='images'
                                             control={control}
-                                            rules={{ required: { value: true, message: 'Vui lòng chọn ảnh' } }}
                                             render={({ field: { onChange, value } }) => (
                                                 <input
                                                     type='file'
@@ -223,9 +237,6 @@ export default function CreateProductForm() {
                         <Grid item xs={12} sm={6}>
                             <Controller
                                 name={'name'}
-                                rules={{
-                                    required: { value: true, message: 'Nhập tên sản phẩm' }
-                                }}
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
                                     <TextField
@@ -244,10 +255,6 @@ export default function CreateProductForm() {
                             <Controller
                                 name={'quantity'}
                                 defaultValue={100}
-                                rules={{
-                                    required: { value: true, message: 'Nhập số lượng sản phẩm' },
-                                    min: { value: 1, message: 'Số lượng phải lớn hơn 1' }
-                                }}
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
                                     <TextField
@@ -266,7 +273,6 @@ export default function CreateProductForm() {
                                 name={'price'}
                                 defaultValue={1000}
                                 rules={{
-                                    required: { value: true, message: 'Nhập giá tiền sản phẩm' },
                                     min: { value: 1000, message: 'Giá tiền phải lớn hơn 1000 VND' }
                                 }}
                                 control={control}
@@ -288,7 +294,6 @@ export default function CreateProductForm() {
                         <Grid item xs={12} sm={6}>
                             <Controller
                                 name={'category'}
-                                rules={{ required: { value: true, message: 'Chọn loại sản phẩm' } }}
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
                                     <Autocomplete
@@ -296,7 +301,7 @@ export default function CreateProductForm() {
                                         id='category'
                                         value={value ? value : null}
                                         isOptionEqualToValue={(option, value) => option.value === value.value}
-                                        options={categories.map((cate) => ({ label: cate.name, value: cate._id }))}
+                                        options={categories}
                                         sx={{ width: '100%' }}
                                         renderInput={params => (
                                             <TextField {...params} error={invalid} helperText={error?.message} label='Loại sản phẩm' />
@@ -313,9 +318,6 @@ export default function CreateProductForm() {
                         <Grid item xs={12}>
                             <Controller
                                 name={'description'}
-                                rules={{
-                                    required: { value: true, message: 'Nhập mô tả sản phẩm' }
-                                }}
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
                                     <TextField
@@ -338,7 +340,6 @@ export default function CreateProductForm() {
                             </Button>
                         </Grid>
                     </Grid>
-
                 </CardContent>
             </form>
         </Card>

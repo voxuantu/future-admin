@@ -1,17 +1,18 @@
 // ** MUI Imports
 import Grid from '@mui/material/Grid'
-import Link from '@mui/material/Link'
 import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 // ** Anothers Imports
 import React from 'react'
-import TableBasic from '../../views/tables/TableBasic'
 import { useRouter } from 'next/router'
+import TableProducts from '../../views/tables/TableProduct'
+import { route } from 'next/dist/server/router'
 
 export default function Products() {
     const router = useRouter()
+
     const handleClickCreateProd = () => {
         router.push('/product/create')
     }
@@ -26,7 +27,7 @@ export default function Products() {
             </Grid>
             <Grid item xs={12}>
                 <Card>
-                    <TableBasic />
+                    <TableProducts />
                 </Card>
             </Grid>
         </Grid>
