@@ -5,10 +5,10 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 
-// Anothers Imports
+// ** Anothers Imports
 import React from 'react'
 import { useRouter } from 'next/router'
-import TableProducts from '../../views/tables/TableProduct'
+import TableOrder from 'src/views/tables/TableOrder'
 
 export default function Products() {
   const router = useRouter()
@@ -29,7 +29,7 @@ export default function Products() {
       </Grid>
       <Grid item xs={12}>
         <Card>
-          <TableProducts />
+          <TableOrder />
         </Card>
       </Grid>
     </Grid>
