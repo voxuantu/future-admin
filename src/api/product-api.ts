@@ -22,11 +22,13 @@ const productAPI = {
 
   deleteProduct: async (prodId: string) => {
     const response = await axiosService.delete<IResponseSuccess<string>>(`${URL}/${prodId}`)
+
     return response.data.data
   },
 
   getProductUpdate: async (productId: string) => {
     const response = await axiosService.get<IResponseSuccess<IUpdateProduct>>(`${URL}/update/${productId}`)
+    
     return response.data.data
   },
 
