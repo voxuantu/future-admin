@@ -16,7 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { toast } from 'react-hot-toast'
 import productAPI from '../../api/product-api'
 import Typography from '@mui/material/Typography'
-import { Button, Dialog, DialogActions, DialogTitle, Grid } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid } from '@mui/material'
 import { useRouter } from 'next/router'
 
 interface Column {
