@@ -36,7 +36,7 @@ export default function Products() {
               onChange={handleChange}
             >
               <MenuItem value={'none'}>None</MenuItem>
-              <MenuItem value={'date'}>Date</MenuItem>
+              <MenuItem value={'date'}>Date Now</MenuItem>
             </Select>
           </FormControl>
         </Box>

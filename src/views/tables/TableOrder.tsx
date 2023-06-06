@@ -19,13 +19,14 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, styled
 import { useRouter } from 'next/router'
 import orderAPI from 'src/api/order-api'
 import moment from 'moment'
+import { TimelineDot } from '@mui/lab'
 
 interface Column {
   id: 'id' | 'customerName' | 'address' | 'totalPrice' | 'status' | 'orderDate'
   label: string
   minWidth?: number
   align?: 'right'
-  format?: (value: number | string) => string
+  format?: (value: number) => string
 }
 
 const columns: readonly Column[] = [
@@ -34,7 +35,7 @@ const columns: readonly Column[] = [
   {
     id: 'address',
     label: 'Address',
-    minWidth: 250
+    minWidth: 200
 
     // format: (value: number) => value.toLocaleString('en-US')
   },
@@ -46,14 +47,14 @@ const columns: readonly Column[] = [
   {
     id: 'totalPrice',
     label: 'Total Price (VND)',
-    minWidth: 70,
+    minWidth: 50,
     align: 'right',
-    format: (value: number | string) => value.toLocaleString('en-US')
+    format: (value: number) => value.toLocaleString('en-US')
   },
   {
     id: 'status',
     label: 'Status Order',
-    minWidth: 50,
+    minWidth: 200,
     align: 'right'
   }
 ]
@@ -116,6 +117,7 @@ const TableOrder = ({ value }: props) => {
   const [totalProds, setTotalProds] = useState<number>(0)
   const [open, setOpen] = useState(false)
   const [seletedProd, setSelectedProd] = useState<string>('')
+  const [orderItemsInfo, setOrderItemsInfo] = useState<IOrderItemsInfo[]>([])
 
   const router = useRouter()
 
@@ -124,17 +126,20 @@ const TableOrder = ({ value }: props) => {
   }
   const handleUpdateStatus = async (status: string) => {
     setOpen(false)
-    const res = await orderAPI.updateStatusInvoice(seletedProd, status)
-    console.log(res)
-    setTimeout(() => router.reload(), 1000)
-    toast.success('transfer to delivery success!!')
+    const res1 = await orderAPI.updateStatusInvoice(seletedProd, status)
+    console.log(res1)
+    setTimeout(() => {
+      toast.success(`Update status order success to: ${res1}`), 1000
+    })
+    router.reload()
   }
 
-  const handleClickOpen = (id: string) => () => {
+  const handleClickOpen = (id: string) => async () => {
     setOpen(true)
-
     setSelectedProd(id)
-    console.log(id)
+    const res2 = await orderAPI.getOrderItemsInfo(id)
+    setOrderItemsInfo(res2)
+    console.log(res2)
   }
 
   const handleChangePage = async (event: unknown, newPage: number) => {
@@ -147,13 +152,16 @@ const TableOrder = ({ value }: props) => {
       setLoading(true)
       const res = await orderAPI.getAllInvoices(10, page)
       console.log(res)
+
+      setTotalProds(res.numOfProds)
+
       setRows(
-        res.map(prod => ({
+        res.allOrders.map(prod => ({
           id: prod.shortId,
-          customerName: prod.userId,
+          customerName: prod.userName,
           address: prod.address,
           totalPrice: prod.total,
-          orderDate: prod.dateCreated,
+          orderDate: moment(prod.dateCreated).format('DD/MM/YYYY hh:mm:ss'),
           status: prod.status
         }))
       )
@@ -170,13 +178,16 @@ const TableOrder = ({ value }: props) => {
       setLoading(true)
       const res = await orderAPI.getInvoiceFollowDate(10, page)
       console.log(res)
+
+      setTotalProds(res.numOfProds)
+
       setRows(
-        res.map(prod => ({
+        res.allOrders.map(prod => ({
           id: prod.shortId,
-          customerName: prod.userId,
+          customerName: prod.userName,
           address: prod.address,
           totalPrice: prod.total,
-          orderDate: prod.dateCreated,
+          orderDate: moment(prod.dateCreated).format('DD/MM/YYYY hh:mm:ss'),
           status: prod.status
         }))
       )
@@ -223,14 +234,14 @@ const TableOrder = ({ value }: props) => {
                 !loading &&
                 rows.map(row => {
                   return (
-                    <TableRow hover role='checkbox' tabIndex={-1} key={row.id} onClick={() => handleClickOpen(row.id)}>
+                    <TableRow hover role='checkbox' tabIndex={-1} key={row.id}>
                       {columns.map(column => {
                         const value = row[column.id]
 
                         if (column.id === 'status') {
                           return (
                             <TableCell key={column.id} align={column.align}>
-                              {column.format && typeof value === 'number' ? column.format(value) : value}
+                              {value}
                               <IconButton onClick={handleClickOpen(row.id)} aria-label='edit' color='primary'>
                                 <EditIcon />
                               </IconButton>
@@ -269,16 +280,69 @@ const TableOrder = ({ value }: props) => {
         />
       </Grid>
       <Grid item xs={12}>
-        <BootstrapDialog onClose={handleClose} aria-labelledby='customized-dialog-title' open={open}>
+        <BootstrapDialog
+          maxWidth='lg'
+          onClose={handleClose}
+          aria-labelledby='customized-dialog-title'
+          open={open}
+          color='primary'
+        >
           <BootstrapDialogTitle id='customized-dialog-title' onClose={handleClose}>
             Cập nhật trạng thái đơn hàng!
           </BootstrapDialogTitle>
-          <DialogContent>aaaa</DialogContent>
-          <DialogActions>
+          <Grid container spacing={2}>
+            <Grid item xs={4}>
+              <DialogTitle display='flex' justifyContent='center' alignItems='center'>
+                Product Name
+              </DialogTitle>
+            </Grid>
+            <Grid item xs={4}>
+              <DialogTitle display='flex' justifyContent='center' alignItems='center'>
+                Price
+              </DialogTitle>
+            </Grid>
+            <Grid item xs={4}>
+              <DialogTitle display='flex' justifyContent='center' alignItems='center'>
+                Quantity
+              </DialogTitle>
+            </Grid>
+            {/* <Grid item xs={3}>
+              <DialogTitle display='flex' justifyContent='center' alignItems='center'>
+                Quantity
+              </DialogTitle>
+            </Grid> */}
+          </Grid>
+          {orderItemsInfo.map(item => (
+            // eslint-disable-next-line react/jsx-key
+            <DialogContent key={item.product}>
+              <Grid container spacing={2}>
+                {/* <Grid item xs={3}>
+                  <Typography>{item.product}</Typography>
+                </Grid> */}
+                <Grid item xs={4}>
+                  <Typography>{item.product}</Typography>
+                </Grid>
+                <Grid item xs={4}>
+                  <Typography display='flex' justifyContent='center' alignItems='center'>
+                    {item.price.toLocaleString('en-US')}
+                  </Typography>
+                </Grid>
+                <Grid item xs={4}>
+                  <Typography display='flex' justifyContent='center' alignItems='center'>
+                    {item.quantity}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </DialogContent>
+          ))}
+          <DialogActions sx={{ flex: true, alignItems: 'center', justifyContent: 'center' }}>
+            <Button variant='contained' color='error' onClick={() => handleUpdateStatus('pending')} autoFocus>
+              Pending
+            </Button>
             <Button variant='contained' onClick={() => handleUpdateStatus('delivering')} autoFocus>
               Delivering
             </Button>
-            <Button variant='contained' color='error' onClick={() => handleUpdateStatus('completed')}>
+            <Button variant='contained' color='success' onClick={() => handleUpdateStatus('completed')}>
               Completed
             </Button>
           </DialogActions>

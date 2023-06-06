@@ -7,7 +7,7 @@ const URL = `${API}/${ENDPOINT}`
 
 const orderAPI = {
   getAllInvoices: async (limit: number, page: number) => {
-    const response = await axiosService.get<IResponseSuccess<IOrderRes[]>>(
+    const response = await axiosService.get<IResponseSuccess<IOrderRes>>(
       `${URL}/pagination?limit=${limit}&page=${page}`
     )
 
@@ -21,8 +21,15 @@ const orderAPI = {
     return response.data.data
   },
   getInvoiceFollowDate: async (limit: number, page: number) => {
-    const response = await axiosService.get<IResponseSuccess<IOrderRes[]>>(
+    const response = await axiosService.get<IResponseSuccess<IOrderRes>>(
       `${URL}/order-follow-date/pagination?limit=${limit}&page=${page}`
+    )
+
+    return response.data.data
+  },
+  getOrderItemsInfo: async (orderId: string) => {
+    const response = await axiosService.get<IResponseSuccess<IOrderItemsInfo[]>>(
+      `${URL}/order-by-id?order-id=${orderId}`
     )
 
     return response.data.data
