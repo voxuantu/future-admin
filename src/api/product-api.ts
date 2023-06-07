@@ -22,16 +22,24 @@ const productAPI = {
 
   deleteProduct: async (prodId: string) => {
     const response = await axiosService.delete<IResponseSuccess<string>>(`${URL}/${prodId}`)
+
     return response.data.data
   },
 
   getProductUpdate: async (productId: string) => {
     const response = await axiosService.get<IResponseSuccess<IUpdateProduct>>(`${URL}/update/${productId}`)
+    
     return response.data.data
   },
 
   updateProduct: async (body: FormData, productId: string) => {
     const response = await axiosService.put<IResponseSuccess<string>>(`${URL}/${productId}`, body)
+
+    return response.data.data
+  },
+
+  countProduct: async () => {
+    const response = await axiosService.get<IResponseSuccess<number>>(`${URL}/count-products`)
 
     return response.data.data
   }
