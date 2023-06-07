@@ -99,7 +99,7 @@ const StatisticsCard = () => {
   return (
     <Card>
       <CardHeader
-        title='Statistics Card'
+        title='Thống kê'
         titleTypographyProps={{
           sx: {
             mb: 2.5,
