@@ -1,5 +1,5 @@
 // ** React Imports
-import { ReactElement } from 'react'
+import { ReactElement, useEffect, useState } from 'react'
 
 // ** MUI Imports
 import Box from '@mui/material/Box'
@@ -20,6 +20,10 @@ import AccountOutline from 'mdi-material-ui/AccountOutline'
 
 // ** Types
 import { ThemeColor } from 'src/@core/layouts/types'
+import productAPI from '../../api/product-api'
+import { toast } from 'react-hot-toast'
+import { userApi } from '../../api/user-api'
+import orderAPI from '../../api/order-api'
 
 interface DataType {
   stats: string
@@ -28,37 +32,10 @@ interface DataType {
   icon: ReactElement
 }
 
-const salesData: DataType[] = [
-  {
-    stats: '245k',
-    title: 'Sales',
-    color: 'primary',
-    icon: <TrendingUp sx={{ fontSize: '1.75rem' }} />
-  },
-  {
-    stats: '12.5k',
-    title: 'Customers',
-    color: 'success',
-    icon: <AccountOutline sx={{ fontSize: '1.75rem' }} />
-  },
-  {
-    stats: '1.54k',
-    color: 'warning',
-    title: 'Products',
-    icon: <CellphoneLink sx={{ fontSize: '1.75rem' }} />
-  },
-  {
-    stats: '$88k',
-    color: 'info',
-    title: 'Revenue',
-    icon: <CurrencyUsd sx={{ fontSize: '1.75rem' }} />
-  }
-]
-
-const renderStats = () => {
-  return salesData.map((item: DataType, index: number) => (
-    <Grid item xs={12} sm={3} key={index}>
-      <Box key={index} sx={{ display: 'flex', alignItems: 'center' }}>
+const StatsItem = ({ stats, color, title, icon }: DataType) => {
+  return (
+    <Grid item xs={12} sm={3}>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Avatar
           variant='rounded'
           sx={{
@@ -67,38 +44,62 @@ const renderStats = () => {
             height: 44,
             boxShadow: 3,
             color: 'common.white',
-            backgroundColor: `${item.color}.main`
+            backgroundColor: `${color}.main`
           }}
         >
-          {item.icon}
+          {icon}
         </Avatar>
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant='caption'>{item.title}</Typography>
-          <Typography variant='h6'>{item.stats}</Typography>
+          <Typography variant='caption'>{title}</Typography>
+          <Typography variant='h6'>{stats}</Typography>
         </Box>
       </Box>
     </Grid>
-  ))
+  )
 }
 
 const StatisticsCard = () => {
+  const [numberOfProducts, setNumberOfProducts] = useState(0)
+  const [numberOfUsers, setNumberOfUsers] = useState(0)
+  const [revenueOfCurrentYear, setRevenueOfCurrentYear] = useState(0)
+
+  const handleFetchNumberOfProducts = async () => {
+    try {
+      const response = await productAPI.countProduct()
+      setNumberOfProducts(response)
+    } catch (error) {
+      toast.error('Không thể lấy sô lượng sản phẩm')
+    }
+  }
+
+  const handleFetchNumberOfUsers = async () => {
+    try {
+      const response = await userApi.countUsers()
+      setNumberOfUsers(response)
+    } catch (error) {
+      toast.error('Không thể lấy sô lượng người dùng')
+    }
+  }
+
+  const handleFetchRevenueOfCurrentYear = async () => {
+    try {
+      const response = await orderAPI.getRevenueOfCurrentYear()
+      setRevenueOfCurrentYear(response)
+    } catch (error) {
+      toast.error('Không thể lấy sô lượng người dùng')
+    }
+  }
+
+  useEffect(() => {
+    handleFetchNumberOfProducts()
+    handleFetchNumberOfUsers()
+    handleFetchRevenueOfCurrentYear()
+  }, [])
+
   return (
     <Card>
       <CardHeader
         title='Statistics Card'
-        action={
-          <IconButton size='small' aria-label='settings' className='card-more-options' sx={{ color: 'text.secondary' }}>
-            <DotsVertical />
-          </IconButton>
-        }
-        subheader={
-          <Typography variant='body2'>
-            <Box component='span' sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Total 48.5% growth
-            </Box>{' '}
-            😎 this month
-          </Typography>
-        }
         titleTypographyProps={{
           sx: {
             mb: 2.5,
@@ -109,7 +110,24 @@ const StatisticsCard = () => {
       />
       <CardContent sx={{ pt: theme => `${theme.spacing(3)} !important` }}>
         <Grid container spacing={[5, 0]}>
-          {renderStats()}
+          <StatsItem
+            stats={numberOfUsers.toString()}
+            color='success'
+            title='Khách hàng'
+            icon={<AccountOutline sx={{ fontSize: '1.75rem' }} />}
+          />
+          <StatsItem
+            stats={numberOfProducts.toString()}
+            color='warning'
+            title='Sản phẩm'
+            icon={<CellphoneLink sx={{ fontSize: '1.75rem' }} />}
+          />
+          <StatsItem
+            stats={revenueOfCurrentYear.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+            color='info'
+            title={`Doanh thu`}
+            icon={<CurrencyUsd sx={{ fontSize: '1.75rem' }} />}
+          />
         </Grid>
       </CardContent>
     </Card>
