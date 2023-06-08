@@ -10,6 +10,7 @@ import AccountPlusOutline from 'mdi-material-ui/AccountPlusOutline'
 import AlertCircleOutline from 'mdi-material-ui/AlertCircleOutline'
 import GoogleCirclesExtended from 'mdi-material-ui/GoogleCirclesExtended'
 import { ShapeOutline } from 'mdi-material-ui'
+import ReceiptText from 'mdi-material-ui/ReceiptText'
 
 // ** Type import
 import { VerticalNavItemsType } from 'src/@core/layouts/types'
@@ -32,58 +33,14 @@ const navigation = (): VerticalNavItemsType => {
       path: '/account-settings'
     },
     {
+      title: 'Order',
+      icon: ReceiptText,
+      path: '/order'
+    },
+    {
       title: 'Categories',
       icon: ShapeOutline,
       path: '/categories'
-    },
-    {
-      sectionTitle: 'Pages'
-    },
-    {
-      title: 'Login',
-      icon: Login,
-      path: '/pages/login',
-      openInNewTab: true
-    },
-    {
-      title: 'Register',
-      icon: AccountPlusOutline,
-      path: '/pages/register',
-      openInNewTab: true
-    },
-    {
-      title: 'Error',
-      icon: AlertCircleOutline,
-      path: '/pages/error',
-      openInNewTab: true
-    },
-    {
-      sectionTitle: 'User Interface'
-    },
-    {
-      title: 'Typography',
-      icon: FormatLetterCase,
-      path: '/typography'
-    },
-    {
-      title: 'Icons',
-      path: '/icons',
-      icon: GoogleCirclesExtended
-    },
-    {
-      title: 'Cards',
-      icon: CreditCardOutline,
-      path: '/cards'
-    },
-    {
-      title: 'Tables',
-      icon: Table,
-      path: '/tables'
-    },
-    {
-      icon: CubeOutline,
-      title: 'Form Layouts',
-      path: '/form-layouts'
     }
   ]
 }
