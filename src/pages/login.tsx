@@ -8,7 +8,6 @@ import { useRouter } from 'next/router'
 // ** MUI Components
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
 import Checkbox from '@mui/material/Checkbox'
 import TextField from '@mui/material/TextField'
 import InputLabel from '@mui/material/InputLabel'
@@ -23,21 +22,18 @@ import InputAdornment from '@mui/material/InputAdornment'
 import MuiFormControlLabel, { FormControlLabelProps } from '@mui/material/FormControlLabel'
 
 // ** Icons Imports
-import Google from 'mdi-material-ui/Google'
-import Github from 'mdi-material-ui/Github'
-import Twitter from 'mdi-material-ui/Twitter'
-import Facebook from 'mdi-material-ui/Facebook'
 import EyeOutline from 'mdi-material-ui/EyeOutline'
 import EyeOffOutline from 'mdi-material-ui/EyeOffOutline'
-
-// ** Configs
-import themeConfig from 'src/configs/themeConfig'
 
 // ** Layout Import
 import BlankLayout from 'src/@core/layouts/BlankLayout'
 
 // ** Demo Imports
 import FooterIllustrationsV1 from 'src/views/pages/auth/FooterIllustration'
+import toast from 'react-hot-toast'
+import { Controller, useForm } from 'react-hook-form'
+import { FormHelperText } from '@mui/material'
+import adminApi from '../api/admin-api'
 
 interface State {
   password: string
@@ -62,27 +58,45 @@ const FormControlLabel = styled(MuiFormControlLabel)<FormControlLabelProps>(({ t
   }
 }))
 
+interface FormValue {
+  username: string
+  password: string
+}
+
 const LoginPage = () => {
-  // ** State
-  const [values, setValues] = useState<State>({
-    password: '',
-    showPassword: false
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const { control, handleSubmit } = useForm<FormValue>({
+    defaultValues: {
+      username: '',
+      password: ''
+    }
   })
 
-  // ** Hook
-  const theme = useTheme()
   const router = useRouter()
 
-  const handleChange = (prop: keyof State) => (event: ChangeEvent<HTMLInputElement>) => {
-    setValues({ ...values, [prop]: event.target.value })
-  }
-
   const handleClickShowPassword = () => {
-    setValues({ ...values, showPassword: !values.showPassword })
+    setShowPassword(value => !value)
   }
 
   const handleMouseDownPassword = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
+  }
+
+  const onSubmit = async (values: FormValue) => {
+    try {
+      setLoading(true)
+      await adminApi.login({
+        username: values.username,
+        password: values.password
+      })
+      setLoading(false)
+      router.push('/')
+    } catch (error) {
+      setLoading(false)
+      toast.error((error as IResponseError).error)
+    }
   }
 
   return (
@@ -90,160 +104,92 @@ const LoginPage = () => {
       <Card sx={{ zIndex: 1 }}>
         <CardContent sx={{ padding: theme => `${theme.spacing(12, 9, 7)} !important` }}>
           <Box sx={{ mb: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg
-              width={35}
-              height={29}
-              version='1.1'
-              viewBox='0 0 30 23'
-              xmlns='http://www.w3.org/2000/svg'
-              xmlnsXlink='http://www.w3.org/1999/xlink'
-            >
-              <g stroke='none' strokeWidth='1' fill='none' fillRule='evenodd'>
-                <g id='Artboard' transform='translate(-95.000000, -51.000000)'>
-                  <g id='logo' transform='translate(95.000000, 50.000000)'>
-                    <path
-                      id='Combined-Shape'
-                      fill={theme.palette.primary.main}
-                      d='M30,21.3918362 C30,21.7535219 29.9019196,22.1084381 29.7162004,22.4188007 C29.1490236,23.366632 27.9208668,23.6752135 26.9730355,23.1080366 L26.9730355,23.1080366 L23.714971,21.1584295 C23.1114106,20.7972624 22.7419355,20.1455972 22.7419355,19.4422291 L22.7419355,19.4422291 L22.741,12.7425689 L15,17.1774194 L7.258,12.7425689 L7.25806452,19.4422291 C7.25806452,20.1455972 6.88858935,20.7972624 6.28502902,21.1584295 L3.0269645,23.1080366 C2.07913318,23.6752135 0.850976404,23.366632 0.283799571,22.4188007 C0.0980803893,22.1084381 2.0190442e-15,21.7535219 0,21.3918362 L0,3.58469444 L0.00548573643,3.43543209 L0.00548573643,3.43543209 L0,3.5715689 C3.0881846e-16,2.4669994 0.8954305,1.5715689 2,1.5715689 C2.36889529,1.5715689 2.73060353,1.67359571 3.04512412,1.86636639 L15,9.19354839 L26.9548759,1.86636639 C27.2693965,1.67359571 27.6311047,1.5715689 28,1.5715689 C29.1045695,1.5715689 30,2.4669994 30,3.5715689 L30,3.5715689 Z'
-                    />
-                    <polygon
-                      id='Rectangle'
-                      opacity='0.077704'
-                      fill={theme.palette.common.black}
-                      points='0 8.58870968 7.25806452 12.7505183 7.25806452 16.8305646'
-                    />
-                    <polygon
-                      id='Rectangle'
-                      opacity='0.077704'
-                      fill={theme.palette.common.black}
-                      points='0 8.58870968 7.25806452 12.6445567 7.25806452 15.1370162'
-                    />
-                    <polygon
-                      id='Rectangle'
-                      opacity='0.077704'
-                      fill={theme.palette.common.black}
-                      points='22.7419355 8.58870968 30 12.7417372 30 16.9537453'
-                      transform='translate(26.370968, 12.771227) scale(-1, 1) translate(-26.370968, -12.771227) '
-                    />
-                    <polygon
-                      id='Rectangle'
-                      opacity='0.077704'
-                      fill={theme.palette.common.black}
-                      points='22.7419355 8.58870968 30 12.6409734 30 15.2601969'
-                      transform='translate(26.370968, 11.924453) scale(-1, 1) translate(-26.370968, -11.924453) '
-                    />
-                    <path
-                      id='Rectangle'
-                      fillOpacity='0.15'
-                      fill={theme.palette.common.white}
-                      d='M3.04512412,1.86636639 L15,9.19354839 L15,9.19354839 L15,17.1774194 L0,8.58649679 L0,3.5715689 C3.0881846e-16,2.4669994 0.8954305,1.5715689 2,1.5715689 C2.36889529,1.5715689 2.73060353,1.67359571 3.04512412,1.86636639 Z'
-                    />
-                    <path
-                      id='Rectangle'
-                      fillOpacity='0.35'
-                      fill={theme.palette.common.white}
-                      transform='translate(22.500000, 8.588710) scale(-1, 1) translate(-22.500000, -8.588710) '
-                      d='M18.0451241,1.86636639 L30,9.19354839 L30,9.19354839 L30,17.1774194 L15,8.58649679 L15,3.5715689 C15,2.4669994 15.8954305,1.5715689 17,1.5715689 C17.3688953,1.5715689 17.7306035,1.67359571 18.0451241,1.86636639 Z'
-                    />
-                  </g>
-                </g>
-              </g>
+            <svg xmlns='http://www.w3.org/2000/svg' width='98' height='25' fill='none' viewBox='0 0 98 25'>
+              <path
+                fill='black'
+                d='M.04.448h14.72v4.48H4.68v5.344h8.736v4.48H4.68V24H.04V.448zm21.682 24.224c-1.258 0-2.314-.384-3.168-1.152-.853-.79-1.301-1.803-1.344-3.04V10.016h4.48v8.8c.043.619.203 1.12.48 1.504.278.363.747.544 1.408.544.662 0 1.227-.224 1.696-.672.49-.448.864-1.056 1.12-1.824.278-.79.416-1.675.416-2.656v-5.696h4.48V24h-4.064l-.352-2.56.064.288a6.04 6.04 0 01-1.216 1.536c-.49.448-1.077.79-1.76 1.024-.661.256-1.408.384-2.24.384zm14.988-20.8h4.48v6.08h3.392v3.488H41.19V24h-4.48V13.44h-2.176V9.952h2.176v-6.08zm15.294 20.8c-1.26 0-2.315-.384-3.168-1.152-.854-.79-1.302-1.803-1.344-3.04V10.016h4.48v8.8c.042.619.202 1.12.48 1.504.277.363.746.544 1.407.544.662 0 1.227-.224 1.697-.672.49-.448.864-1.056 1.12-1.824.277-.79.416-1.675.416-2.656v-5.696h4.48V24h-4.065l-.351-2.56.063.288a6.038 6.038 0 01-1.215 1.536 4.97 4.97 0 01-1.76 1.024c-.662.256-1.408.384-2.24.384zM69.71 10.016l.416 3.84-.096-.576a6.205 6.205 0 011.664-2.112c.704-.597 1.397-1.056 2.08-1.376.704-.32 1.237-.48 1.6-.48l-.224 4.48c-1.045-.128-1.941.043-2.688.512a4.813 4.813 0 00-1.728 1.856 5.016 5.016 0 00-.608 2.368V24h-4.448V10.016h4.032zm14.848 14.368c-1.707 0-3.157-.32-4.352-.96-1.173-.64-2.07-1.525-2.688-2.656-.619-1.13-.928-2.432-.928-3.904 0-1.408.363-2.677 1.088-3.808a7.85 7.85 0 012.912-2.688c1.216-.683 2.57-1.024 4.064-1.024 2.005 0 3.648.587 4.928 1.76 1.301 1.152 2.144 2.827 2.528 5.024l-10.88 3.456-.992-2.432 7.872-2.656-.928.416a3.174 3.174 0 00-.928-1.44c-.427-.427-1.077-.64-1.952-.64-.661 0-1.248.16-1.76.48-.49.299-.875.736-1.152 1.312-.256.555-.384 1.216-.384 1.984 0 .875.16 1.61.48 2.208.32.576.757 1.013 1.312 1.312a3.851 3.851 0 001.856.448c.49 0 .96-.085 1.408-.256.47-.17.928-.395 1.376-.672l1.984 3.328A11.25 11.25 0 0186.991 24c-.853.256-1.664.384-2.432.384zm8.484-2.688c0-.661.234-1.216.703-1.664.491-.448 1.025-.672 1.6-.672.534 0 1.035.224 1.504.672.491.448.737 1.003.737 1.664 0 .704-.246 1.27-.737 1.696-.469.405-.97.608-1.503.608-.576 0-1.11-.203-1.6-.608-.47-.427-.704-.992-.704-1.696z'
+              ></path>
             </svg>
-            <Typography
-              variant='h6'
-              sx={{
-                ml: 3,
-                lineHeight: 1,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                fontSize: '1.5rem !important'
-              }}
-            >
-              {themeConfig.templateName}
-            </Typography>
           </Box>
           <Box sx={{ mb: 6 }}>
             <Typography variant='h5' sx={{ fontWeight: 600, marginBottom: 1.5 }}>
-              Welcome to {themeConfig.templateName}! 👋🏻
+              Chào mừng bạn tới Future! 👋🏻
             </Typography>
-            <Typography variant='body2'>Please sign-in to your account and start the adventure</Typography>
           </Box>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()}>
-            <TextField autoFocus fullWidth id='email' label='Email' sx={{ marginBottom: 4 }} />
+          <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
+            <Controller
+              name='username'
+              control={control}
+              rules={{
+                required: { value: true, message: 'Yêu cầu nhập tên đăng nhập' }
+              }}
+              defaultValue={''}
+              render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
+                <TextField
+                  value={value}
+                  onChange={onChange}
+                  error={invalid}
+                  helperText={error?.message}
+                  autoFocus
+                  fullWidth
+                  id='username'
+                  label='Tên đăng nhập'
+                  sx={{ marginBottom: 4 }}
+                />
+              )}
+            />
             <FormControl fullWidth>
-              <InputLabel htmlFor='auth-login-password'>Password</InputLabel>
-              <OutlinedInput
-                label='Password'
-                value={values.password}
-                id='auth-login-password'
-                onChange={handleChange('password')}
-                type={values.showPassword ? 'text' : 'password'}
-                endAdornment={
-                  <InputAdornment position='end'>
-                    <IconButton
-                      edge='end'
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      aria-label='toggle password visibility'
-                    >
-                      {values.showPassword ? <EyeOutline /> : <EyeOffOutline />}
-                    </IconButton>
-                  </InputAdornment>
-                }
+              <InputLabel htmlFor='auth-login-password'>Mật khẩu</InputLabel>
+              <Controller
+                name='password'
+                defaultValue={''}
+                control={control}
+                rules={{ required: { value: true, message: 'Yêu cầu nhập mật khẩu' } }}
+                render={({ field: { onChange, value }, fieldState: { error, invalid } }) => (
+                  <>
+                    <OutlinedInput
+                      label='Mật khẩu'
+                      value={value}
+                      id='auth-login-password'
+                      onChange={onChange}
+                      error={invalid}
+                      type={showPassword ? 'text' : 'password'}
+                      endAdornment={
+                        <InputAdornment position='end'>
+                          <IconButton
+                            edge='end'
+                            onClick={handleClickShowPassword}
+                            onMouseDown={handleMouseDownPassword}
+                            aria-label='toggle password visibility'
+                          >
+                            {showPassword ? <EyeOutline /> : <EyeOffOutline />}
+                          </IconButton>
+                        </InputAdornment>
+                      }
+                    />
+                    {invalid && <FormHelperText error={invalid}>{error?.message}</FormHelperText>}
+                  </>
+                )}
               />
             </FormControl>
             <Box
               sx={{ mb: 4, display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}
             >
-              <FormControlLabel control={<Checkbox />} label='Remember Me' />
+              <FormControlLabel control={<Checkbox />} label='Ghi nhớ tài khoản' />
               <Link passHref href='/'>
-                <LinkStyled onClick={e => e.preventDefault()}>Forgot Password?</LinkStyled>
+                <LinkStyled onClick={e => e.preventDefault()}>Quên mật khẩu?</LinkStyled>
               </Link>
             </Box>
             <Button
+              disabled={loading}
               fullWidth
               size='large'
+              type='submit'
               variant='contained'
               sx={{ marginBottom: 7 }}
-              onClick={() => router.push('/')}
             >
-              Login
+              {loading ? 'Đang đăng nhâp...' : 'Đăng nhập'}
             </Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Typography variant='body2' sx={{ marginRight: 2 }}>
-                New on our platform?
-              </Typography>
-              <Typography variant='body2'>
-                <Link passHref href='/pages/register'>
-                  <LinkStyled>Create an account</LinkStyled>
-                </Link>
-              </Typography>
-            </Box>
-            <Divider sx={{ my: 5 }}>or</Divider>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Link href='/' passHref>
-                <IconButton component='a' onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}>
-                  <Facebook sx={{ color: '#497ce2' }} />
-                </IconButton>
-              </Link>
-              <Link href='/' passHref>
-                <IconButton component='a' onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}>
-                  <Twitter sx={{ color: '#1da1f2' }} />
-                </IconButton>
-              </Link>
-              <Link href='/' passHref>
-                <IconButton component='a' onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}>
-                  <Github
-                    sx={{ color: theme => (theme.palette.mode === 'light' ? '#272727' : theme.palette.grey[300]) }}
-                  />
-                </IconButton>
-              </Link>
-              <Link href='/' passHref>
-                <IconButton component='a' onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}>
-                  <Google sx={{ color: '#db4437' }} />
-                </IconButton>
-              </Link>
-            </Box>
           </form>
         </CardContent>
       </Card>
