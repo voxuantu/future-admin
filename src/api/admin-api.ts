@@ -22,6 +22,12 @@ const adminApi = {
     const response = await axiosService.put<IResponseSuccess<ResAdmin>>(URL + '/setting', data)
 
     return response.data.data
+  },
+
+  validate: async () => {
+    const response = await axiosService.get<IResponseSuccess<boolean>>(URL + '/validate')
+
+    return response.data.data
   }
 }
 
