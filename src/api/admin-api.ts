@@ -1,3 +1,4 @@
+import { setCookie } from 'cookies-next'
 import axiosService from './axios-service'
 
 const API = process.env.API_URL
@@ -8,12 +9,12 @@ const URL = `${API}/${ENDPOINT}`
 const adminApi = {
   get: async () => {
     const response = await axiosService.get<IResponseSuccess<ResAdmin>>(URL)
-
     return response.data.data
   },
 
   login: async (data: AdminLogin) => {
     const response = await axiosService.post<IResponseSuccess<string>>(URL + '/login', data)
+    setCookie('Authorization', response.data.data)
 
     return response.data.data
   },
