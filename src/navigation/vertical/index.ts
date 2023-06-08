@@ -10,6 +10,7 @@ import AccountPlusOutline from 'mdi-material-ui/AccountPlusOutline'
 import AlertCircleOutline from 'mdi-material-ui/AlertCircleOutline'
 import GoogleCirclesExtended from 'mdi-material-ui/GoogleCirclesExtended'
 import { ShapeOutline } from 'mdi-material-ui'
+import ReceiptText from 'mdi-material-ui/ReceiptText'
 
 // ** Type import
 import { VerticalNavItemsType } from 'src/@core/layouts/types'
@@ -30,6 +31,11 @@ const navigation = (): VerticalNavItemsType => {
       title: 'Account Settings',
       icon: AccountCogOutline,
       path: '/account-settings'
+    },
+    {
+      title: 'Order',
+      icon: ReceiptText,
+      path: '/order'
     },
     {
       title: 'Categories',
